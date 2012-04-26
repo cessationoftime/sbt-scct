@@ -16,7 +16,7 @@ docDirectory is reused for the coverage report directory
 
 1. retrive the sources from github:
 
-	git clone git@github.com:dvc94ch/sbt-scct.git
+	git clone git@github.com:jestan/sbt-scct.git
 
 2. publish plugin:
 
@@ -25,7 +25,7 @@ docDirectory is reused for the coverage report directory
 
 3. add plugin dependency in .sbt/project/plugins.sbt:
 
-        addSbtPlugin("ch.craven" %% "sbt-scct" % "0.2")	
+        addSbtPlugin("ch.craven" %% "scct-plugin" % "0.2.1")
 	
 4. to enable ScctPlugin in your project, add the following line to your build.sbt
 

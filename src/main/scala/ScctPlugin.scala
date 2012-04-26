@@ -8,6 +8,9 @@ object ScctPlugin extends Plugin {
 	lazy val CoverageTest = config("coverage-test") extend(Test) extend(Coverage)
 	/* defining scopes 'Coverage' & 'CoverageTest' */
 
+  /* artifact filter used to attach scct compiler plugin jar using-Xplugin arg */
+  val scctCompilerPluginFilter: NameFilter = (s: String) => s.startsWith("scct_")
+
 	/* project values */
 	var project_name = ""
 	var project_docdir = ""
@@ -24,8 +27,8 @@ object ScctPlugin extends Plugin {
 			resolvers += "scct repository" at "http://mtkopone.github.com/scct/maven-repo",
 
 			libraryDependencies <<= (scalaVersion, libraryDependencies) { (sv, deps) =>
-				val map = Map("2.9.1" -> "2.9.0-1", "2.9.0-1" -> "2.9.0-1","2.9.0" -> "2.9.0-1", "2.8.1" -> "2.8.0", "2.8.0" -> "2.8.0", "2.7.7" -> "2.7.7")
-				val scctVersion = map.getOrElse(sv, error("Unsupported Scala version " + sv))
+				val map = Map("2.9.1" -> "2.9.1", "2.9.0-1" -> "2.9.0-1","2.9.0" -> "2.9.0-1", "2.8.1" -> "2.8.0", "2.8.0" -> "2.8.0", "2.7.7" -> "2.7.7")
+				val scctVersion = map.getOrElse(sv, sys.error("Unsupported Scala version " + sv))
 				deps :+ "reaktor" % ("scct_" + scctVersion) % "0.1-SNAPSHOT" % "coverage"
 			},
 			/* adding scct as a dependency */
@@ -35,7 +38,7 @@ object ScctPlugin extends Plugin {
 
 			scalacOptions in Coverage <++= update.map { report =>
 				// gets the jars declared in the coverage configuration
-    			val scctJars = report matching configurationFilter("coverage")
+    			val scctJars = report matching artifactFilter(name = scctCompilerPluginFilter)
     			scctJars.map("-Xplugin:" + _.getAbsolutePath) toSeq
 			},
 			/* configuring scope 'Coverage' */
@@ -44,9 +47,9 @@ object ScctPlugin extends Plugin {
 			/* modifying tasks */
 			TaskKey[Unit]("test") in Coverage <<= (TaskKey[Unit]("test") in CoverageTest).dependsOn(compile in Coverage),
 
-			docDirectory in Coverage <<= crossTarget / "coverage-report",
+			(target in Coverage in doc) <<= crossTarget / "coverage-report",
 
-			doc in Coverage <<= (docDirectory in Coverage) map { (d) => d },
+			(doc in Coverage) <<= (target in Coverage in doc) map { (d) => d },
 
 			TaskKey[File]("doc") in Coverage <<= (TaskKey[File]("doc") in Coverage).dependsOn(test in Coverage),
 			/* modifying tasks */
@@ -63,8 +66,8 @@ object ScctPlugin extends Plugin {
 			    	project_name = (name in currentRef get structure.data) match {
 			    	  case Some(x) => x; case _ => "" }
 
-			    	project_docdir = (docDirectory in (currentRef, Coverage) get structure.data) match {
-			    	  case Some(x) => x.absolutePath; case _ => "" }
+			    	project_docdir = ((target in (currentRef, Coverage) in doc) get structure.data) match {
+			    	  case Some(x) => (x / "coverage-report").absolutePath; case _ => "" }
 
 			    	project_scaladir = (scalaSource in (currentRef, Coverage) get structure.data) match {
 			    	  case Some(x) => x.absolutePath; case _ => "" }
@@ -77,7 +80,7 @@ object ScctPlugin extends Plugin {
 			/* get values */
 
 			/* configuring scope 'CoverageTest' */
-			sources in CoverageTest <<= (sources in Test).identity,
+			sources in CoverageTest <<= (sources in Test),
 
 			fullClasspath in CoverageTest <<=
 				(fullClasspath in CoverageTest, classDirectory in Compile, classDirectory in Coverage)
@@ -100,8 +103,15 @@ object ScctPlugin extends Plugin {
 
 			  	println("Wait for report completion.")
 
-			  	while (System.getProperty(reportProperty) != "done")
-			  		Thread.sleep(200)
+          val maxSleep = compat.Platform.currentTime + 60L*1000L
+
+          while (sys.props(reportProperty) != "done" && compat.Platform.currentTime < maxSleep) {
+            Thread.sleep(200L)
+          }
+
+          if (sys.props(reportProperty) != "done") {
+            println("Timed out waiting for report")
+          }
 			}
 			/* configuring scope 'CoverageTest' */
 	  )
