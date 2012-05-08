@@ -1,4 +1,4 @@
-#### This is a sbt 0.11.x plugin for [scct](http://mtkopone.github.com/scct/) the scala code coverage tool.
+#### This is a sbt 0.11.3 plugin for [scct](http://mtkopone.github.com/scct/) the scala code coverage tool.
 
 scct ist auto-installed depending on the scalaVersion of the project.
 
@@ -25,7 +25,7 @@ docDirectory is reused for the coverage report directory
 
 3. add plugin dependency in .sbt/project/plugins.sbt:
 
-        addSbtPlugin("ch.craven" %% "scct-plugin" % "0.2.1")
+        addSbtPlugin("ch.craven" %% "scct-plugin" % "0.2.1-SNAPSHOT")
 	
 4. to enable ScctPlugin in your project, add the following line to your build.sbt
 
