@@ -34,7 +34,7 @@ object ScctPlugin extends Plugin {
 			/* adding scct as a dependency */
 
 			/* configuring scope 'Coverage' */
-			sources in Coverage <<= (sources in Compile).identity,
+			sources in Coverage <<= (sources in Compile),
 
 			scalacOptions in Coverage <++= update.map { report =>
 				// gets the jars declared in the coverage configuration
